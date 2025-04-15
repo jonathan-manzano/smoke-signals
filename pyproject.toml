@@ -1,0 +1,32 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "ds_capstone"
+version = "0.0.1"
+description = "Capstone Project for SJSU SP25 CS 163: Data Science Senior Project"
+authors = [
+  { name = "Jonathan V. Manzano" },
+]
+license = { file = "LICENSE" }
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License"
+]
+requires-python = "~=3.13"
+
+
+[tool.ruff]
+line-length = 99
+src = ["ds_capstone"]
+include = ["pyproject.toml", "ds_capstone/**/*.py"]
+
+[tool.ruff.lint]
+extend-select = ["I"]  # Add import sorting
+
+[tool.ruff.lint.isort]
+known-first-party = ["ds_capstone"]
+force-sort-within-sections = true
+
