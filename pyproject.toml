@@ -1,32 +1,23 @@
-[build-system]
-requires = ["flit_core >=3.2,<4"]
-build-backend = "flit_core.buildapi"
-
 [project]
-name = "ds_capstone"
-version = "0.0.1"
-description = "Capstone Project for SJSU SP25 CS 163: Data Science Senior Project"
-authors = [
-  { name = "Jonathan V. Manzano" },
-]
-license = { file = "LICENSE" }
+name = "ds-capstone"
+version = "0.1.0"
+description = "Add your description here"
 readme = "README.md"
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License"
+requires-python = ">=3.12"
+dependencies = [
+    "dash>=3.0.3",
+    "dotenv>=0.9.9",
+    "flask>=3.0.3",
+    "google-cloud-storage>=3.1.0",
+    "gunicorn>=23.0.0",
+    "jupyterlab>=4.4.0",
+    "loguru>=0.7.3",
+    "matplotlib>=3.10.1",
+    "notebook>=7.4.0",
+    "numpy>=2.2.4",
+    "pandas>=2.2.3",
+    "plotly>=6.0.1",
+    "seaborn>=0.13.2",
+    "tqdm>=4.67.1",
+    "typer>=0.15.2",
 ]
-requires-python = "~=3.13"
-
-
-[tool.ruff]
-line-length = 99
-src = ["ds_capstone"]
-include = ["pyproject.toml", "ds_capstone/**/*.py"]
-
-[tool.ruff.lint]
-extend-select = ["I"]  # Add import sorting
-
-[tool.ruff.lint.isort]
-known-first-party = ["ds_capstone"]
-force-sort-within-sections = true
-
