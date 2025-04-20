@@ -1,4 +1,4 @@
-# ds-capstone documentation!
+# smoke-signals documentation!
 
 ## Description
 
