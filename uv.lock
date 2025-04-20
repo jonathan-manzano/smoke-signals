@@ -386,7 +386,7 @@ wheels = [
 ]
 
 [[package]]
-name = "ds-capstone"
+name = "smoke-signals"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
