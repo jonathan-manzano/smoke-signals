@@ -184,3 +184,6 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Unused directory for now
+src/ds_capstone/
