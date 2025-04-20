@@ -2,7 +2,7 @@
 # GLOBALS                                                                       #
 #################################################################################
 
-PROJECT_NAME = ds-capstone
+PROJECT_NAME = smoke-signals
 PYTHON_VERSION = 3.13
 PYTHON_INTERPRETER = python
 
