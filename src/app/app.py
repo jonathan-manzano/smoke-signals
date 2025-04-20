@@ -5,7 +5,11 @@ import pandas as pd
 import plotly.express as px
 from dash import Dash, html, dash_table, dcc, callback, Output, Input
 from google.cloud import storage
+import dash
 
+# Initialize the Dash app with multipage support
+app = Dash(__name__, use_pages=True)
+server = app.server  # Expose the Flask server for WSGI.
 
 def get_csv_from_gcs(bucket_name, source_blob_name):
     """
@@ -23,12 +27,8 @@ df = pd.read_csv(
     "https://raw.githubusercontent.com/plotly/datasets/master/gapminder2007.csv"
 )
 
-# Initialize the Dash app.
-app = Dash(__name__)
-server = app.server  # Expose the Flask server for WSGI.
-
 # Cloud Storage demo: Try to load a second dataset.
-BUCKET_NAME = os.environ.get("BUCKET_NAME")
+BUCKET_NAME = os.environ.get("smoke-signal-bucket")
 if BUCKET_NAME:
     try:
         df2 = get_csv_from_gcs(BUCKET_NAME, "customers-100-simple.csv")
@@ -39,36 +39,32 @@ else:
     print("BUCKET_NAME environment variable not set; skipping Cloud Storage demo.")
     df2 = pd.DataFrame()
 
-# Define the app layout.
+# Define the app layout
 app.layout = html.Div(
     [
-        html.Div("My First App with Data, Graph, and Controls"),
-        html.Hr(),
-        dcc.RadioItems(
-            options=["pop", "lifeExp", "gdpPercap"],
-            value="lifeExp",
-            id="controls-and-radio-item",
+        # Header
+        html.Header(
+            html.H1("Smoke Signals:Time Series Forecasting of PM2.5 Amid California Wildfires", style={"margin": "0", "padding": "20px", "text-align": "center", "background-color": "#ac7c34", "color": "white"}),
         ),
-        dash_table.DataTable(data=df.to_dict("records"), page_size=6),
-        dcc.Graph(figure={}, id="controls-and-graph"),
-        html.Hr(),
-        # A second table for the Google Cloud Storage demo.
-        dash_table.DataTable(data=df2.to_dict("records"), page_size=6),
+        # Navigation Bar
+        html.Nav(
+            [
+                html.Div(
+                    html.A(page["name"], href=page["relative_path"], style={"margin-right": "15px", "font-weight": "bold", "color": "white", "text-decoration": "none"}),
+                    style={"display": "inline-block"}
+                ) for page in dash.page_registry.values()
+            ],
+            style={"background-color": "#444", "padding": "10px", "text-align": "center"}
+        ),
+        # Page Content
+        html.Div(
+            dash.page_container,
+            style={"padding": "20px"}
+        ),
     ]
 )
-
-
-# Callback to update the graph based on selected radio item.
-@callback(
-    Output("controls-and-graph", "figure"),
-    Input("controls-and-radio-item", "value"),
-)
-def update_graph(col_chosen):
-    fig = px.histogram(df, x="continent", y=col_chosen, histfunc="avg")
-    return fig
-
 
 # Run the app using the proper host and port configuration.
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
-    app.run_server(debug=True, host="0.0.0.0", port=port)
+    app.run(debug=True)

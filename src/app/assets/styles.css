@@ -6,19 +6,36 @@ body {
 }
 
 header {
-    background-color: #333;
+    background-color: #ac7c34;
     color: white;
-    padding: 1rem 0;
+    padding: 20px;
     text-align: center;
 }
 
+nav {
+    background-color: #ac7c34;
+    padding: 10px;
+    text-align: center;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    margin-right: 15px;
+    font-weight: bold;
+}
+
+nav a:hover {
+    text-decoration: underline;
+}
+
 main {
-    padding: 2rem;
+    padding: 20px;
     text-align: center;
 }
 
 footer {
-    background-color: #333;
+    background-color: #ac7c34;
     color: white;
     text-align: center;
     padding: 1rem 0;
@@ -32,5 +49,5 @@ footer {
     height: 80vh;
     border: none;
     margin-top: 1rem;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 8px rgba(12, 15, 192, 0.2);
 }
