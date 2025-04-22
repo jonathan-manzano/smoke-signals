@@ -1,9 +1,9 @@
 [project]
 name = "smoke-signals"
 version = "0.1.0"
-description = "Add your description here"
+description = "SJSU SP25 CS163 Capstone Project"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.12, <3.13"
 dependencies = [
     "dash>=3.0.3",
     "dotenv>=0.9.9",
@@ -13,11 +13,20 @@ dependencies = [
     "jupyterlab>=4.4.0",
     "loguru>=0.7.3",
     "matplotlib>=3.10.1",
+    "metpy>=1.6.3",
+    "mkl-include>=2025.1.0",
+    "mkl-static>=2025.1.0",
     "notebook>=7.4.0",
     "numpy>=2.2.4",
     "pandas>=2.2.3",
     "plotly>=6.0.1",
+    "pyg-lib>=0.4.0",
     "seaborn>=0.13.2",
+    "torch-cluster>=1.6.3",
+    "torch-geometric>=2.6.1",
+    "torch-scatter>=2.1.2",
+    "torch-sparse>=0.6.18",
+    "torch-spline-conv>=1.2.2",
     "tqdm>=4.67.1",
     "typer>=0.15.2",
 ]
