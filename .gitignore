@@ -187,3 +187,6 @@ cython_debug/
 
 # Unused directory for now
 src/ds_capstone/
+
+# Models
+models/
