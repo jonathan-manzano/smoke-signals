@@ -1,5 +1,5 @@
 experiments:
-  metero_use: [
+  meteorological_use: [
                '100m_u_component_of_wind',
                '100m_v_component_of_wind',
                '2m_dewpoint_temperature',
@@ -13,7 +13,7 @@ experiments:
                'frp_50km_idw',
                'frp_100km_idw',
                'frp_500km_idw',
-               'numfires',
+               'num_fires',
                #'interp_flag',
                'julian_date',
                'time_of_day',]
@@ -40,11 +40,11 @@ train:
 
 filepath:
   GPU-Server:
-    knowair_fp: /data/pm25gnn/data/dataset_fire_wind_aligned.npy
+    air_data_fp: /data/pm25gnn/data/dataset_fire_wind_aligned.npy
     results_dir: /data/pm25gnn/results
 
 data:
-  metero_var:
+  meteorological_var:
     [
      '100m_u_component_of_wind',
      '100m_v_component_of_wind',
@@ -59,7 +59,7 @@ data:
      'frp_50km_idw',
      'frp_100km_idw',
      'frp_500km_idw',
-     'numfires',
+     'num_fires',
      'interp_flag',
      'julian_date',
      'time_of_day',
@@ -76,5 +76,5 @@ dataset:
     val_end: [[2020, 12, 31], GMT]
     test_start: [[2021, 1, 1], GMT]
     test_end: [[2021, 5, 31], GMT]
-    sim_window_start: [[2021, 1, 3], GMT] #window length must be equal to histlen + predlen
-    sim_window_end: [[2021, 1, 15], GMT]  #non-inclusive
+    sim_window_start: [[2021, 1, 3], GMT] # window length must be equal to histlen + predlen
+    sim_window_end: [[2021, 1, 15], GMT]  # non-inclusive
