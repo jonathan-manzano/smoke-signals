@@ -1,147 +1,272 @@
-import os
-import sys
-proj_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(proj_dir)
-from util import config, file_dir
-from datetime import datetime
+"""
+HazeData dataset module for air quality prediction.
+
+This module provides dataset functionality for training and evaluating
+models that predict PM2.5 concentrations using meteorological data.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any, List, Literal, Tuple
+
 import numpy as np
 import arrow
-import pdb
 import metpy.calc as mpcalc
 from metpy.units import units
-from torch.utils import data
+from torch.utils.data import Dataset
 
-class HazeData(data.Dataset):
-    def __init__(self, graph,
-                       hist_len=1,
-                       pred_len=24,
-                       dataset_num=1,
-                       flag='Train',
-                       ):
-        if flag == 'Train':
-            start_time_str = 'train_start'
-            end_time_str = 'train_end'
-        elif flag == 'Val':
-            start_time_str = 'val_start'
-            end_time_str = 'val_end'
-        elif flag == 'Test':
-            start_time_str = 'test_start'
-            end_time_str = 'test_end'
+# Import project utilities with proper path handling
+project_dir = Path(__file__).parent.parent.resolve()
+import sys
+sys.path.append(str(project_dir))
+from util import initialize_environment, get_dataset_config, get_time
+
+
+class HazeData(Dataset):
+    """
+    Dataset class for air quality prediction with meteorological features.
+
+    This class handles loading, processing, and normalizing meteorological
+    and air quality data for training, validation, and testing.
+
+    Attributes:
+        feature: Normalized meteorological features
+        pm25: Normalized PM2.5 concentration values
+        time_arr: Array of timestamps
+        feature_mean: Mean values of features (for normalization)
+        feature_std: Standard deviation of features (for normalization)
+        pm25_mean: Mean value of PM2.5 concentrations
+        pm25_std: Standard deviation of PM2.5 concentrations
+    """
+
+    def __init__(
+        self,
+        graph: Any,
+        hist_len: int = 1,
+        pred_len: int = 24,
+        dataset_num: int = 1,
+        flag: Literal["Train", "Val", "Test"] = "Train",
+    ) -> None:
+        """
+        Initialize the HazeData dataset.
+
+        Args:
+            graph: Graph object representing the spatial relationships
+            hist_len: Number of historical time steps to use
+            pred_len: Number of future time steps to predict
+            dataset_num: Dataset configuration number
+            flag: Dataset split type ("Train", "Val", or "Test")
+
+        Raises:
+            ValueError: If an invalid flag is provided
+        """
+        # Load configuration and file paths
+        self.config, self.file_dir = initialize_environment()
+        self.dataset_config = get_dataset_config(self.config, dataset_num)
+
+        # Determine time range based on dataset flag
+        if flag == "Train":
+            start_time_str = "train_start"
+            end_time_str = "train_end"
+        elif flag == "Val":
+            start_time_str = "val_start"
+            end_time_str = "val_end"
+        elif flag == "Test":
+            start_time_str = "test_start"
+            end_time_str = "test_end"
         else:
-            raise Exception('Wrong Flag!')
-          
-        self.start_time = self._get_time(config['dataset'][dataset_num][start_time_str])
-        self.end_time = self._get_time(config['dataset'][dataset_num][end_time_str])
-        self.data_start = self._get_time(config['dataset']['data_start'])
-        self.data_end = self._get_time(config['dataset']['data_end'])
-        self.knowair_fp = file_dir['knowair_fp']
+            raise ValueError(f"Invalid flag: {flag}. Must be 'Train', 'Val', or 'Test'")
+
+        # Get time ranges from configuration
+        # Use the raw time data from the config for the get_time function
+        self.start_time = get_time(self.dataset_config[start_time_str])
+        self.end_time = get_time(self.dataset_config[end_time_str])
+        self.data_start = get_time(self.dataset_config["data_start"])
+        self.data_end = get_time(self.dataset_config["data_end"])
+
+        # Set data source and graph
+        self.knowair_fp = self.file_dir["knowair_fp"]
         self.graph = graph
-        self._load_npy()
-        self._gen_time_arr()
-        self._process_time()
-        self._process_feature()
-        self.feature, self.pm25 = np.float32(self.feature), np.float32(self.pm25)
-        #self.frp500 = np.float32(self.frp500) # uncomment for 'train_ambient.py'
-        self._calc_mean_std()
+
+        # Process data
+        self._load_data()
+        self._generate_time_arrays()
+        self._process_time_range()
+        self._process_features()
+
+        # Convert to float32 for efficiency
+        self.feature = np.float32(self.feature)
+        self.pm25 = np.float32(self.pm25)
+
+        # Calculate statistics and normalize
+        self._calculate_statistics()
+
+        # Prepare sequences
         seq_len = hist_len + pred_len
-        self._add_time_dim(seq_len)                 
-        self._norm()
-        self._dictionary()
+        self._prepare_sequences(seq_len)
+        self._normalize_data()
+        self._create_time_index()
 
-    def _dictionary(self):
-        self.time_index = {}
-        for i in range(self.time_arr_full.shape[0]):
-            self.time_index[self.time_arr_full[i]] = i
+    def _load_data(self) -> None:
+        """Load data from NumPy files."""
+        try:
+            self.knowair = np.load(self.knowair_fp)
+            self.feature = self.knowair[:, :, :-1]
+            self.pm25 = self.knowair[:, :, -1:]
+            # Uncomment for 'train_ambient.py' if needed:
+            # self.frp500 = self.knowair[:, :, 12]
+        except (FileNotFoundError, IOError) as e:
+            raise IOError(f"Failed to load data from {self.knowair_fp}: {e}") from e
 
-    def _norm(self):
+    def _generate_time_arrays(self) -> None:
+        """Generate arrays of time objects and timestamps."""
+        self.time_arrow: List[arrow.Arrow] = []
+        self.time_arr: List[float] = []
+
+        # Create hourly timestamps from start to end (inclusive)
+        for time_arrow in arrow.Arrow.interval(
+            "hour",
+            self.data_start,
+            self.data_end.shift(hours=+1),
+            1
+        ):
+            self.time_arrow.append(time_arrow[0])
+            self.time_arr.append(time_arrow[0].timestamp)
+
+        self.time_arr = np.array(self.time_arr)
+
+    def _process_time_range(self) -> None:
+        """Extract data for the specified time range."""
+        start_idx = self._get_index(self.start_time)
+        end_idx = self._get_index(self.end_time)
+
+        self.pm25 = self.pm25[start_idx:end_idx+1, :]
+        self.feature = self.feature[start_idx:end_idx+1, :]
+        # Uncomment for 'train_ambient.py' if needed:
+        # self.frp500 = self.frp500[start_idx:end_idx+1, :]
+        self.time_arr = self.time_arr[start_idx:end_idx+1]
+        self.time_arrow = self.time_arrow[start_idx:end_idx+1]
+
+    def _process_features(self) -> None:
+        """Process and augment meteorological features."""
+        # Select required meteorological variables
+        metero_var = self.config["data"]["metero_var"]
+        metero_use = self.config["experiments"]["metero_use"]
+        metero_idx = [metero_var.index(var) for var in metero_use]
+        self.feature = self.feature[:, :, metero_idx]
+
+        # Extract wind components (indices should be defined as constants)
+        WIND_U_IDX = 7  # u_component_of_wind+950
+        WIND_V_IDX = 8  # v_component_of_wind+950
+
+        # Calculate wind speed and direction using MetPy
+        u = self.feature[:, :, WIND_U_IDX] * units.meter / units.second
+        v = self.feature[:, :, WIND_V_IDX] * units.meter / units.second
+        speed = 3.6 * mpcalc.wind_speed(u, v)._magnitude  # Convert to km/h
+        direction = mpcalc.wind_direction(u, v)._magnitude
+
+        # Extract hour and weekday features
+        hour_arr = np.array([t.hour for t in self.time_arrow])
+        weekday_arr = np.array([t.isoweekday() for t in self.time_arrow])
+
+        # Expand dimensions for broadcasting
+        hour_arr = np.repeat(hour_arr[:, np.newaxis], self.graph.node_num, axis=1)
+        weekday_arr = np.repeat(weekday_arr[:, np.newaxis], self.graph.node_num, axis=1)
+
+        # Concatenate all features
+        self.feature = np.concatenate([
+            self.feature,
+            hour_arr[:, :, np.newaxis],
+            weekday_arr[:, :, np.newaxis],
+            speed[:, :, np.newaxis],
+            direction[:, :, np.newaxis]
+        ], axis=-1)
+
+    def _calculate_statistics(self) -> None:
+        """Calculate mean and standard deviation for normalization."""
+        self.feature_mean = self.feature.mean(axis=(0, 1))
+        self.feature_std = self.feature.std(axis=(0, 1))
+
+        # Store wind statistics separately if needed
+        WIND_U_IDX = 7
+        WIND_V_IDX = 8
+        self.wind_mean = self.feature_mean[WIND_U_IDX:WIND_V_IDX+1]
+        self.wind_std = self.feature_std[WIND_U_IDX:WIND_V_IDX+1]
+
+        self.pm25_mean = self.pm25.mean()
+        self.pm25_std = self.pm25.std()
+
+    def _prepare_sequences(self, seq_len: int) -> None:
+        """Prepare data sequences with appropriate offsets.
+
+        Args:
+            seq_len: Length of sequence (history + prediction)
+        """
+        # Create copies for full sequences
+        self.pm25_full = self.pm25.copy()
+        self.feature_full = self.feature.copy()
+        self.time_arr_full = self.time_arr.copy()
+
+        # Adjust arrays to account for sequence length
+        self.pm25 = self.pm25[seq_len:]
+        self.feature = self.feature[seq_len:]
+        self.time_arr = self.time_arr[seq_len:]
+
+    def _normalize_data(self) -> None:
+        """Normalize features and target values."""
+        # Apply z-score normalization
         self.feature = (self.feature - self.feature_mean) / self.feature_std
         self.pm25 = (self.pm25 - self.pm25_mean) / self.pm25_std
         self.feature_full = (self.feature_full - self.feature_mean) / self.feature_std
         self.pm25_full = (self.pm25_full - self.pm25_mean) / self.pm25_std
 
-    def _add_time_dim(self, seq_len):
-        self.pm25_full = np.empty_like(self.pm25)
-        self.pm25_full[:] = self.pm25[:]
-        self.pm25 = self.pm25[seq_len:]
-        self.feature_full = np.empty_like(self.feature)
-        self.feature_full[:] = self.feature[:]
-        self.feature = self.feature[seq_len:]
-        self.time_arr_full = np.empty_like(self.time_arr)
-        self.time_arr_full[:] = self.time_arr[:]
-        self.time_arr = self.time_arr[seq_len:]
+    def _create_time_index(self) -> None:
+        """Create dictionary mapping timestamps to indices."""
+        self.time_index = {timestamp: i for i, timestamp in enumerate(self.time_arr_full)}
 
-    def _calc_mean_std(self):
-        self.feature_mean = self.feature.mean(axis=(0,1))
-        self.feature_std = self.feature.std(axis=(0,1))
-        self.wind_mean = self.feature_mean[7:9] # 7 and 8 index of u and v component_of_wind+950
-        self.wind_std = self.feature_std[7:9] # 7 and 8 index of u and v component_of_wind+950
-        self.pm25_mean = self.pm25.mean()
-        self.pm25_std = self.pm25.std()
+    def _get_index(self, t: arrow.Arrow) -> int:
+        """Convert timestamp to index based on data start time.
 
-    def _process_feature(self):
-        metero_var = config['data']['metero_var']
-        metero_use = config['experiments']['metero_use']
-        metero_idx = [metero_var.index(var) for var in metero_use]
-        self.feature = self.feature[:,:,metero_idx]
-        u = self.feature[:, :, 7] * units.meter / units.second # 7 is the index of u_component_of_wind+950
-        v = self.feature[:, :, 8] * units.meter / units.second # 8 is the index of v_component_of_wind+950
-        speed = 3.6 * mpcalc.wind_speed(u, v)._magnitude
-        direc = mpcalc.wind_direction(u, v)._magnitude
-        h_arr = []
-        w_arr = []
-        for i in self.time_arrow:
-            h_arr.append(i.hour)
-            w_arr.append(i.isoweekday())
-        h_arr = np.stack(h_arr, axis=-1)
-        w_arr = np.stack(w_arr, axis=-1)
-        h_arr = np.repeat(h_arr[:, None], self.graph.node_num, axis=1)
-        w_arr = np.repeat(w_arr[:, None], self.graph.node_num, axis=1)
-        self.feature = np.concatenate([self.feature, h_arr[:, :, None], w_arr[:, :, None],
-                                       speed[:, :, None], direc[:, :, None]
-                                       ], axis=-1)
+        Args:
+            t: Arrow time object
 
-    def _process_time(self):
-        start_idx = self._get_idx(self.start_time)
-        end_idx = self._get_idx(self.end_time)
-        self.pm25 = self.pm25[start_idx: end_idx+1, :]
-        self.feature = self.feature[start_idx: end_idx+1, :]
-        #self.frp500 = self.frp500[start_idx: end_idx+1, :] # uncomment for 'train_ambient.py'
-        self.time_arr = self.time_arr[start_idx: end_idx+1]
-        self.time_arrow = self.time_arrow[start_idx: end_idx + 1]
-
-    def _gen_time_arr(self):
-        self.time_arrow = []
-        self.time_arr = []
-        # determines time granularity (in this case, 1 hour)
-        for time_arrow in arrow.Arrow.interval('hour', self.data_start, self.data_end.shift(hours=+1), 1):
-            self.time_arrow.append(time_arrow[0])
-            self.time_arr.append(time_arrow[0].timestamp)
-        self.time_arr = np.stack(self.time_arr, axis=-1)
-
-    def _load_npy(self):
-        self.knowair = np.load(self.knowair_fp)
-        self.feature = self.knowair[:,:,:-1]
-        self.pm25 = self.knowair[:,:,-1:]
-        #self.frp500 = self.knowair[:,:,12] # uncomment for 'train_ambient.py'
-
-    def _get_idx(self, t):
+        Returns:
+            Index in the time array
+        """
         t0 = self.data_start
-        # determines time granularity
+        # Calculate hours difference (hourly granularity)
         return int((t.timestamp - t0.timestamp) / (60 * 60))
 
-    def _get_time(self, time_yaml):
-        arrow_time = arrow.get(datetime(*time_yaml[0]), time_yaml[1])
-        return arrow_time
+    def __len__(self) -> int:
+        """Return the number of samples in the dataset.
 
-    def __len__(self):
+        Returns:
+            Number of data points
+        """
         return len(self.pm25)
 
-    def __getitem__(self, index):
+    def __getitem__(self, index: int) -> Tuple[np.ndarray, np.ndarray, float]:
+        """Get item at the specified index.
+
+        Args:
+            index: Index to retrieve
+
+        Returns:
+            Tuple of (pm25, feature, timestamp)
+        """
         return self.pm25[index], self.feature[index], self.time_arr[index]
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
+    # Example usage
     from graph import Graph
+
     graph = Graph()
-    train_data = HazeData(graph, flag='Train')
-    val_data = HazeData(graph, flag='Val')
-    test_data = HazeData(graph, flag='Test')
+    train_data = HazeData(graph, flag="Train")
+    val_data = HazeData(graph, flag="Val")
+    test_data = HazeData(graph, flag="Test")
+
+    print(f"Train data shape: {train_data.feature.shape}")
+    print(f"Validation data shape: {val_data.feature.shape}")
+    print(f"Test data shape: {test_data.feature.shape}")
