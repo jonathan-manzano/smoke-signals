@@ -1,54 +1,42 @@
+# app.py
 import os
-from io import StringIO
-
-import pandas as pd
-import plotly.express as px
-from dash import Dash, html, dash_table, dcc, callback, Output, Input
-from google.cloud import storage
 import dash
+from dash import Dash, html
+import dash_bootstrap_components as dbc
 from utils import get_csv_from_gcs
+from Nav_bar import create_navbar
 
-# Initialize the Dash app with multipage support
-app = Dash(__name__, use_pages=True)
-server = app.server  # Expose the Flask server for WSGI.
-
-# BUCKET_NAME = os.environ.get("BUCKET_NAME")
-# if BUCKET_NAME:
-#     try:
-#         df2 = get_csv_from_gcs(BUCKET_NAME, "gapminder2007.csv")
-#     except Exception as e:
-#         print(f"Error loading CSV from GCS: {e}")
-#         df2 = pd.DataFrame()  # Fallback to an empty DataFrame.
-# else:
-#     print("BUCKET_NAME environment variable not set; skipping Cloud Storage demo.")
-#     df2 = pd.DataFrame()
-
-# Define the app layout
-app.layout = html.Div(
-    [
-        # Header
-        html.Header(
-            html.H1("Smoke Signals:Time Series Forecasting of PM2.5 Amid California Wildfires", style={"margin": "0", "padding": "20px", "text-align": "center", "background-color": "#ac7c34", "color": "white"}),
-        ),
-        # Navigation Bar
-        html.Nav(
-            [
-                html.Div(
-                    html.A(page["name"], href=page["relative_path"], style={"margin-right": "15px", "font-weight": "bold", "color": "white", "text-decoration": "none"}),
-                    style={"display": "inline-block"}
-                ) for page in dash.page_registry.values()
-            ],
-            style={"background-color": "#444", "padding": "10px", "text-align": "center"}
-        ),
-        # Page Content
-        html.Div(
-            dash.page_container,
-            style={"padding": "20px"}
-        ),
-    ]
+# Initialize with Bootstrap + custom assets/styles.css
+app = Dash(
+    __name__,
+    use_pages=True,
+    external_stylesheets=[dbc.themes.BOOTSTRAP],
 )
+server = app.server
 
-# Run the app using the proper host and port configuration.
+app.layout = html.Div(className="dashboard-frame", children=[
+    html.Header(
+        html.H1("Smoke Signals: Time Series Forecasting of PM2.5 Amid California Wildfires"),
+        className="header"
+    ),
+
+    # This will render into <nav>…</nav> if you provided assets/index.html,
+    # or just sit here if not.
+    create_navbar(
+        project_name=""
+    ),
+
+    html.Main(
+        html.Div(dash.page_container),
+        className="main"
+    ),
+
+    html.Footer(
+        html.P("© 2023 Smoke Signals. All rights reserved."),
+        className="footer"
+    ),
+])
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(debug=True)
