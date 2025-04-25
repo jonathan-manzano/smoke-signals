@@ -2,12 +2,14 @@ import dash
 from dash import html, dcc, dash_table, callback, Input, Output
 import plotly.express as px
 import pandas as pd
+from utils import get_csv_from_gcs
+
 
 # Register the page with a custom title
 dash.register_page(__name__, name="Analytics")
 
 # Sample dataset (replace with actual data if needed)
-df = pd.read_csv("https://raw.githubusercontent.com/plotly/datasets/master/gapminder2007.csv")
+df = get_csv_from_gcs("smoke-signal-bucket", "gapminder2007.csv")
 
 # Define the analytics page layout
 layout = html.Div(

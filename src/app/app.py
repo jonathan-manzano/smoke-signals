@@ -6,38 +6,22 @@ import plotly.express as px
 from dash import Dash, html, dash_table, dcc, callback, Output, Input
 from google.cloud import storage
 import dash
+from utils import get_csv_from_gcs
 
 # Initialize the Dash app with multipage support
 app = Dash(__name__, use_pages=True)
 server = app.server  # Expose the Flask server for WSGI.
 
-def get_csv_from_gcs(bucket_name, source_blob_name):
-    """
-    Download a CSV file from Google Cloud Storage and return a DataFrame.
-    """
-    storage_client = storage.Client()
-    bucket = storage_client.bucket(bucket_name)
-    blob = bucket.blob(source_blob_name)
-    data = blob.download_as_text()
-    return pd.read_csv(StringIO(data))
-
-
-# Load primary dataset from an external URL.
-df = pd.read_csv(
-    "https://raw.githubusercontent.com/plotly/datasets/master/gapminder2007.csv"
-)
-
-# Cloud Storage demo: Try to load a second dataset.
-BUCKET_NAME = os.environ.get("smoke-signal-bucket")
-if BUCKET_NAME:
-    try:
-        df2 = get_csv_from_gcs(BUCKET_NAME, "customers-100-simple.csv")
-    except Exception as e:
-        print(f"Error loading CSV from GCS: {e}")
-        df2 = pd.DataFrame()  # Fallback to an empty DataFrame.
-else:
-    print("BUCKET_NAME environment variable not set; skipping Cloud Storage demo.")
-    df2 = pd.DataFrame()
+# BUCKET_NAME = os.environ.get("BUCKET_NAME")
+# if BUCKET_NAME:
+#     try:
+#         df2 = get_csv_from_gcs(BUCKET_NAME, "gapminder2007.csv")
+#     except Exception as e:
+#         print(f"Error loading CSV from GCS: {e}")
+#         df2 = pd.DataFrame()  # Fallback to an empty DataFrame.
+# else:
+#     print("BUCKET_NAME environment variable not set; skipping Cloud Storage demo.")
+#     df2 = pd.DataFrame()
 
 # Define the app layout
 app.layout = html.Div(
