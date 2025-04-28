@@ -1,9 +1,8 @@
-from model.cells import LSTMCell
-import torch.nn.functional as F
-from torch_geometric.nn import ChebConv
 import torch
 from torch import nn
+from torch_geometric.nn import ChebConv
 
+from model.cells import LSTMCell
 
 class GC_LSTM(nn.Module):
     def __init__(self, hist_len, pred_len, in_dim, city_num, batch_size, device, edge_index):
@@ -36,7 +35,7 @@ class GC_LSTM(nn.Module):
             x = torch.cat((xn, feature[:, self.hist_len+i]), dim=-1)
             x_gcn = x.contiguous()
             x_gcn = x_gcn.view(self.batch_size * self.city_num, -1)
-            x_gcn = F.sigmoid(self.conv(x_gcn, self.edge_index))
+            x_gcn = torch.sigmoid(self.conv(x_gcn, self.edge_index))
             x_gcn = x_gcn.view(self.batch_size, self.city_num, -1)
             x = torch.cat((x, x_gcn), dim=-1)
             hn, cn = self.lstm_cell(x, (hn, cn))

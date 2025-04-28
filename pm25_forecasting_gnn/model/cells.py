@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from torch import nn
-import torch.nn.functional as F
+
 
 
 class GRUCell(nn.Module):
@@ -32,9 +32,9 @@ class GRUCell(nn.Module):
         i_r, i_i, i_n = gate_x.chunk(3, 1)
         h_r, h_i, h_n = gate_h.chunk(3, 1)
 
-        resetgate = F.sigmoid(i_r + h_r)
-        inputgate = F.sigmoid(i_i + h_i)
-        newgate = F.tanh(i_n + (resetgate * h_n))
+        resetgate = torch.sigmoid(i_r + h_r)
+        inputgate = torch.sigmoid(i_i + h_i)
+        newgate = torch.tanh(i_n + (resetgate * h_n))
 
         hy = newgate + inputgate * (hidden - newgate)
 
@@ -68,13 +68,13 @@ class LSTMCell(nn.Module):
 
         ingate, forgetgate, cellgate, outgate = gates.chunk(4, 1)
 
-        ingate = F.sigmoid(ingate)
-        forgetgate = F.sigmoid(forgetgate)
-        cellgate = F.tanh(cellgate)
-        outgate = F.sigmoid(outgate)
+        ingate = torch.sigmoid(ingate)
+        forgetgate = torch.sigmoid(forgetgate)
+        cellgate = torch.tanh(cellgate)
+        outgate = torch.sigmoid(outgate)
 
         cy = torch.mul(cx, forgetgate) + torch.mul(ingate, cellgate)
 
-        hy = torch.mul(outgate, F.tanh(cy))
+        hy = torch.mul(outgate, torch.tanh(cy))
 
-        return (hy, cy)
+        return hy, cy

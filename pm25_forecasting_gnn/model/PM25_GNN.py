@@ -4,7 +4,7 @@ from model.cells import GRUCell
 from torch.nn import Sequential, Linear, Sigmoid
 import numpy as np
 from torch_scatter import scatter_add#, scatter_sub  # no scatter sub in lastest PyG
-from torch.nn import functional as F
+
 from torch.nn import Parameter
 
 
@@ -49,7 +49,7 @@ class GraphGNN(nn.Module):
         city_direc = self.edge_attr_[:,:,1]
 
         theta = torch.abs(city_direc - src_wind_direc)
-        edge_weight = F.relu(3 * src_wind_speed * torch.cos(theta) / city_dist)
+        edge_weight = torch.relu(3 * src_wind_speed * torch.cos(theta) / city_dist)
         edge_weight = edge_weight.to(self.device)
         edge_attr_norm = self.edge_attr_norm[None, :, :].repeat(node_src.size(0), 1, 1).to(self.device)
         out = torch.cat([node_src, node_target, edge_attr_norm, edge_weight[:,:,None]], dim=-1)
