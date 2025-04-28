@@ -190,3 +190,8 @@ src/ds_capstone/
 
 # Models
 models/
+
+# Later implementation
+/smoke_signals/configs
+/smoke_signals/scripts
+/smoke_signals/src
