@@ -1,24 +1,23 @@
+import os # Used for checking file existence
+from datetime import datetime
+from pathlib import Path
+
 import dash
-from dash import dcc, html, Input, Output, State
 import plotly.graph_objects as go
 import numpy as np
 import pandas as pd
-from datetime import datetime
-import os # Used for checking file existence
+from dash import dcc, html, Input, Output, State
 
 # --- Configuration: Replace with your actual file paths ---
-# PREDICT_NET_FILE = '/path/to/your/predict_pm25gnn.npy' # Not strictly needed for this heatmap
-# PREDICT_AMBIENT_FILE = '/path/to/your/predict_pm25gnn_ambient.npy' # Not strictly needed
-LABEL_FILE = '/path/to/your/label.npy' # Essential for observed PM2.5
-TIME_FILE = '/path/to/your/time.npy' # Essential for time filtering
-LOCATIONS_FILE = '/path/to/your/locations.txt' # Essential for labels
-
-# --- Use placeholder paths if you haven't set them above ---
-# PREDICT_NET_FILE = os.environ.get('PREDICT_NET_FILE', 'predict_pm25gnn.npy')
-# PREDICT_AMBIENT_FILE = os.environ.get('PREDICT_AMBIENT_FILE', 'predict_pm25gnn_ambient.npy')
-LABEL_FILE = os.environ.get('LABEL_FILE', 'label.npy')
-TIME_FILE = os.environ.get('TIME_FILE', 'time.npy')
-LOCATIONS_FILE = os.environ.get('LOCATIONS_FILE', 'locations.txt')
+PROJ_ROOT = Path(__file__).resolve().parents[1]
+PM25GNN_DIR = PROJ_ROOT / "models" / "pm25gnn" / "00"
+PREDICT_NET_FILE = PM25GNN_DIR / "predict.npy"
+PM25GNN_AMBIENT_DIR = PROJ_ROOT / "models" / "pm25gnn-ambient" / "00"
+PREDICT_AMBIENT_FILE = PM25GNN_AMBIENT_DIR / "predict.npy"
+LABEL_FILE = PM25GNN_DIR / "label.npy"
+TIME_FILE = PM25GNN_DIR / "time.npy"
+RAW_DATA_DIR = PROJ_ROOT / "data" / "raw"
+LOCATIONS_FILE = RAW_DATA_DIR / "locations.txt"
 
 
 # --- Constants (Update if necessary based on your training config) ---
