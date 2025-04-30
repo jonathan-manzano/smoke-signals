@@ -107,9 +107,6 @@ if os.path.exists(LOCATIONS_FILE):
 else:
     print(f"Error: Locations file not found at {LOCATIONS_FILE}")
 
-# print(locations)
-# print(location_map)
-
 # --- Exit if essential data failed to load ---
 if (
     feature_data_raw is None
@@ -122,106 +119,6 @@ if (
         "Essential data files (features, label, time, locations) could not be loaded. Exiting."
     )
     exit()
-
-# # --- Data Structure Adaptation ---
-# print("Adapting data structure...")
-# try:
-#     # Step 0: Handle Shape Mismatch
-#     min_len = min(
-#         feature_data_raw.shape[0], label_data_raw.shape[0], time_data_raw.shape[0]
-#     )
-#     feature_data_trunc = feature_data_raw[:min_len]
-#     label_data_trunc = label_data_raw[:min_len]
-#     time_data_trunc = time_data_raw[:min_len]
-#
-#     # Get number of locations and features
-#     num_locations_data = label_data_raw.shape[
-#         -2
-#     ]  # Assuming location is second-to-last dim
-#     num_features_data = feature_data_raw.shape[-1]  # Assuming features is last dim
-#
-#     # --- Validate Feature Names ---
-#     if num_features_data != len(FEATURE_NAMES):
-#         print(
-#             f"FATAL ERROR: Number of features in data ({num_features_data}) does not match length of FEATURE_NAMES list ({len(FEATURE_NAMES)})."
-#         )
-#         print(
-#             "Please update the FEATURE_NAMES list in the script to match your data columns."
-#         )
-#         exit()
-#     else:
-#         print(f"Data has {num_features_data} features, matching FEATURE_NAMES list.")
-#
-#     if num_locations_data != len(locations):
-#         print(
-#             f"Warning: Location count mismatch! Data has {num_locations_data}, file has {len(locations)}. Using data count."
-#         )
-#         locations = [
-#             {"label": f"Loc {i}", "value": i} for i in range(num_locations_data)
-#         ]
-#         location_map = {i: f"Loc {i}" for i in range(num_locations_data)}
-#
-#     # Step 1: Extract Relevant Horizon & Reshape Data
-#     if len(label_data_trunc.shape) == 4:  # Assumes (samples, seq, loc, 1) for label
-#         sequence_length = label_data_trunc.shape[1]
-#         if PRED_LEN > sequence_length:
-#             raise ValueError("PRED_LEN > sequence length")
-#
-#         # Extract label part corresponding to predictions
-#         label_pred = label_data_trunc[
-#             :, -PRED_LEN:, :, 0
-#         ]  # Shape: (samples, PRED_LEN, loc)
-#
-#         # Extract corresponding feature part
-#         # Assuming features file has same sample/seq/loc structure, but last dim is num_features
-#         if feature_data_trunc.shape[:3] != label_data_trunc.shape[:3]:
-#             raise ValueError(
-#                 "Feature and Label sample/sequence/location dimensions mismatch"
-#             )
-#         feature_pred = feature_data_trunc[
-#             :, -PRED_LEN:, :, :
-#         ]  # Shape: (samples, PRED_LEN, loc, feat)
-#
-#         num_samples = label_pred.shape[0]
-#         num_locs = label_pred.shape[2]
-#         num_feats = feature_pred.shape[3]
-#
-#         # Reshape to (time*pred_len, locations, features/labels)
-#         label_actual = label_pred.reshape(
-#             num_samples * PRED_LEN, num_locs
-#         )  # Shape: (time, loc)
-#         feature_actual = feature_pred.reshape(
-#             num_samples * PRED_LEN, num_locs, num_feats
-#         )  # Shape: (time, loc, feat)
-#
-#         # Process time data
-#         if time_data_trunc.shape[0] == num_samples:
-#             time_data_processed = np.repeat(time_data_trunc, PRED_LEN)
-#         else:
-#             raise ValueError("Time data shape mismatch")
-#
-#     elif len(label_data_trunc.shape) == 2:  # Assumes (time, location)
-#         label_actual = label_data_trunc  # Shape: (time, loc)
-#         if feature_data_trunc.shape[:2] != label_actual.shape[:2]:
-#             raise ValueError("Feature and Label time/location dimensions mismatch")
-#         feature_actual = feature_data_trunc  # Shape: (time, loc, feat)
-#         time_data_processed = time_data_trunc
-#     else:
-#         raise ValueError("Unsupported label data shape")
-#
-#     # Step 2: Process Timestamps
-#     if time_data_processed.shape[0] != label_actual.shape[0]:
-#         raise ValueError("Timestamp array shape incompatible")
-#     time_data_dt = pd.to_datetime(time_data_processed, unit="s")
-#
-#     print("Data preprocessing complete.")
-#     print(f"Processed label data shape: {label_actual.shape}")
-#     print(f"Processed feature data shape: {feature_actual.shape}")
-#     print(f"Processed time data length: {len(time_data_dt)}")
-#
-# except Exception as e:
-#     print(f"An error occurred during data structure adaptation: {e}")
-#     exit()
 
 # --- Data Structure Adaptation (Simpler for aligned data) ---
 print("Adapting data structure (assuming aligned full time series)...")
