@@ -1,20 +1,7 @@
-# filepath: c:\Users\Aaron Sam\Documents\CS163\smoke-signals\src\app\utils.py
-import pandas as pd
 from google.cloud import storage
-from io import StringIO
 import numpy as np
-import os
 import tempfile
-
-def get_csv_from_gcs(bucket_name, source_blob_name):
-    """
-    Download a CSV file from Google Cloud Storage and return a DataFrame.
-    """
-    storage_client = storage.Client()
-    bucket = storage_client.bucket(bucket_name)
-    blob = bucket.blob(source_blob_name)
-    data = blob.download_as_text()
-    return pd.read_csv(StringIO(data))
+import os
 
 def get_npy_from_gcs(bucket_name, source_blob_name):
     """
@@ -30,14 +17,11 @@ def get_npy_from_gcs(bucket_name, source_blob_name):
     # Create a temporary file to store the downloaded .npy file
     with tempfile.NamedTemporaryFile(delete=False) as temp_file:
         temp_file_path = temp_file.name
-        print(f"Downloading gs://{bucket_name}/{source_blob_name} to temporary file {temp_file_path}...")
         blob.download_to_filename(temp_file_path)
 
     try:
         # Load the .npy file into a NumPy array
-        print(f"Loading NumPy data from {temp_file_path}...")
         numpy_data = np.load(temp_file_path, allow_pickle=True)
-        print("NumPy data loaded successfully!")
         return numpy_data
     finally:
         # Clean up the temporary file
