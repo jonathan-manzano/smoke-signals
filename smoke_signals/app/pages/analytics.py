@@ -1,6 +1,5 @@
 # analytics.py
 from app.data_loader import load_and_preprocess_data
-from Nav_bar import create_navbar
 import dash
 from dash import html, dcc, callback, Input, Output
 import plotly.graph_objects as go
@@ -9,8 +8,7 @@ from pathlib import Path
 import os
 import sys
 
-APP_ROOT = Path(__file__).resolve().parents[1]
-os,sys.path.append(str(APP_ROOT))
+
 
 dash.register_page(__name__, path="/analytics", name="Methods")
 
@@ -18,7 +16,6 @@ dash.register_page(__name__, path="/analytics", name="Methods")
 df, locations, location_map = load_and_preprocess_data()
 
 layout = html.Div([
-    create_navbar(),
 
     # Hero
     html.Section(

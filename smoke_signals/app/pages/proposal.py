@@ -1,13 +1,12 @@
 # proposal.py
 import dash
 from dash import html
-from Nav_bar import create_navbar
+
 
 dash.register_page(__name__, path="/proposal", name="Proposal")
 
 layout = html.Div([
-    create_navbar(),
-
+    
     # Hero Section
     html.Section(
         html.Div([

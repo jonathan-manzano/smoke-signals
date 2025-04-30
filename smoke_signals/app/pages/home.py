@@ -1,7 +1,6 @@
 # home.py
 import dash
 from dash import html
-from Nav_bar import create_navbar
 
 dash.register_page(__name__, path="/", name="Home")
 

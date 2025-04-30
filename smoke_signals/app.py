@@ -3,12 +3,17 @@ import os
 import dash
 from dash import Dash, html
 import dash_bootstrap_components as dbc
-from Nav_bar import create_navbar
+from app.Nav_bar import create_navbar
+# import sys
+# from pathlib import Path
 
+
+# sys.path.append(str(Path(__file__).resolve().parents[1]))
 # Initialize the Dash app with Bootstrap and custom styles
 app = Dash(
     __name__,
     use_pages=True,
+    pages_folder="app/pages",
     external_stylesheets=[dbc.themes.BOOTSTRAP],
 )
 server = app.server
