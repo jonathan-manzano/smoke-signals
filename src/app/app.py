@@ -3,7 +3,6 @@ import os
 import dash
 from dash import Dash, html
 import dash_bootstrap_components as dbc
-from utils import get_csv_from_gcs
 from Nav_bar import create_navbar
 
 # Initialize the Dash app with Bootstrap and custom styles
@@ -18,17 +17,8 @@ server = app.server
 app.layout = html.Div(
     className="dashboard-frame",
     children=[
-        # Header Section
-        html.Header(
-            html.H1(
-                "Smoke Signals: Time Series Forecasting of PM2.5 Amid California Wildfires",
-                className="header text-center my-4",
-            ),
-            className="bg-dark text-white py-3",
-        ),
-
-        # Navigation Bar
-        create_navbar(project_name="Exploring PM2.5 Data"),
+        # Navbar Section
+        create_navbar(),  # Move the navbar to the top
 
         # Main Content Section
         html.Main(

@@ -1,48 +1,62 @@
+# analytics.py
 import dash
 from dash import html, dcc, callback, Input, Output
 import plotly.express as px
-import pandas as pd
 from utils import get_csv_from_gcs
-import dash_bootstrap_components as dbc
+from Nav_bar import create_navbar
 
-dash.register_page(__name__, name="Analytics")
+dash.register_page(__name__, path="/analytics", name="Methods")
 
-# Load the dataset
+# load your dataframe as before…
 df = get_csv_from_gcs("smoke-signal-bucket", "gapminder2007.csv")
 
-layout = dbc.Container(
-    [
-        html.H1("Analytics Dashboard", className="text-center my-4"),
-        html.P(
-            "Analyze PM2.5 data trends and explore the impact of wildfires on air quality.",
-            className="lead text-center",
+layout = html.Div([
+    create_navbar(),
+
+    # Hero
+    html.Section(
+      html.Div([
+        html.H1("Analytics Dashboard"),
+        html.P("Interactive charts to explore your data", className="lead")
+      ], className="container"),
+      className="hero"
+    ),
+
+    # Metric cards if any…
+    html.Section(
+      html.Div([
+        # e.g. html.Div([...], className="metric"), …
+      ], className="metrics container")
+    ),
+
+    # Plot + controls
+    html.Section(
+      html.Div([
+        dcc.RadioItems(
+          id="analytics-radio-item",
+          options=[{"label": col, "value": col} for col in ["pop", "lifeExp", "gdpPercap"]],
+          value="pop",
+          inline=True
         ),
-        html.Hr(),
-        dbc.Row(
-            [
-                dbc.Col(
-                    dcc.RadioItems(
-                        options=["pop", "lifeExp", "gdpPercap"],
-                        value="lifeExp",
-                        id="analytics-radio-item",
-                        className="mb-4",
-                    ),
-                    width=4,
-                ),
-                dbc.Col(
-                    dcc.Graph(id="analytics-graph"),
-                    width=8,
-                ),
-            ]
-        ),
-    ],
-    className="p-4",
-)
+        dcc.Graph(id="analytics-graph")
+      ], className="container"),
+    ),
+
+    # Final CTA
+    html.Section(
+      html.Div([
+        html.A("View Findings →", href="/findings", className="btn btn-primary")
+      ], className="container"),
+      className="hero hero--inverse"
+    ),
+])
 
 @callback(
     Output("analytics-graph", "figure"),
     Input("analytics-radio-item", "value"),
 )
 def update_graph(col_chosen):
-    fig = px.histogram(df, x="continent", y=col_chosen, histfunc="avg", title=f"Average {col_chosen} by Continent")
+    fig = px.histogram(df, x="continent", y=col_chosen,
+                       histfunc="avg",
+                       title=f"Average {col_chosen} by Continent")
     return fig

@@ -1,79 +1,87 @@
+# proposal.py
 import dash
 from dash import html
-import dash_bootstrap_components as dbc
+from Nav_bar import create_navbar
 
-dash.register_page(__name__, name="Proposal", path="/proposal")
+dash.register_page(__name__, path="/proposal", name="Proposal")
 
-layout = dbc.Container(
-    [
-        # Title Section
-        html.H1("Project Proposal", className="text-center my-4"),
-        
-        # Project Summary Section
-        dbc.Card(
-            dbc.CardBody(
-                [
-                    html.H2("Project Summary", className="card-title"),
-                    html.P(
-                        "This project aims to create reliable time series forecasting models to accurately predict hourly PM2.5 levels during California's wildfire seasons. "
-                        "By analyzing historical air quality data, meteorological conditions, and wildfire events, we aim to provide actionable insights and improve early warning systems.",
-                        className="card-text",
-                    ),
-                ]
+layout = html.Div([
+    create_navbar(),
+
+    # Hero Section
+    html.Section(
+        html.Div([
+            html.H1("Project Proposal"),
+            html.P(
+                "This project aims to create reliable time series forecasting models to accurately predict hourly PM2.5 levels during California's wildfire seasons. "
+                "By analyzing historical air quality data, meteorological conditions, and wildfire events, we aim to provide actionable insights and improve early warning systems.",
+                className="lead"
             ),
-            className="mb-4 shadow-sm",
-        ),
+        ], className="container"),
+        className="hero"
+    ),
 
-        # Objectives Section
-        dbc.Card(
-            dbc.CardBody(
-                [
-                    html.H2("Objectives", className="card-title"),
-                    dbc.ListGroup(
-                        [
-                            dbc.ListGroupItem("Analyze seasonal and temporal trends in PM2.5 concentrations."),
-                            dbc.ListGroupItem("Identify key meteorological and wildfire-related drivers of PM2.5 levels."),
-                            dbc.ListGroupItem("Develop advanced forecasting models for early warning systems."),
-                        ]
-                    ),
-                ]
-            ),
-            className="mb-4 shadow-sm",
-        ),
+    # Objectives Section
+    html.Section(
+        html.Div([
+            html.Div([
+                html.H3("Objectives"),
+                html.Ul([
+                    html.Li("Analyze seasonal and temporal trends in PM2.5 concentrations."),
+                    html.Li("Identify key meteorological and wildfire-related drivers of PM2.5 levels."),
+                    html.Li("Develop advanced forecasting models for early warning systems."),
+                ])
+            ], className="card"),
+        ], className="cards-grid"),
+    ),
 
-        # Broader Impacts Section
-        dbc.Card(
-            dbc.CardBody(
-                [
-                    html.H2("Broader Impacts", className="card-title"),
-                    dbc.ListGroup(
-                        [
-                            dbc.ListGroupItem("Provide accurate PM2.5 forecasts for sensitive communities."),
-                            dbc.ListGroupItem("Influence policies on land management and fire prevention strategies."),
-                            dbc.ListGroupItem("Highlight the impact of wildfires on air quality."),
-                        ]
-                    ),
-                ]
-            ),
-            className="mb-4 shadow-sm",
-        ),
+    # Broader Impacts Section
+    html.Section(
+        html.Div([
+            html.H2("Broader Impacts"),
+            html.Ul([
+                html.Li("Provide accurate PM2.5 forecasts for sensitive communities."),
+                html.Li("Influence policies on land management and fire prevention strategies."),
+                html.Li("Highlight the impact of wildfires on air quality."),
+                html.Li("Support public health initiatives by identifying high-risk areas."),
+            ])
+        ], className="container"),
+    ),
 
-        # Data Sources Section
-        dbc.Card(
-            dbc.CardBody(
-                [
-                    html.H2("Data Sources", className="card-title"),
-                    dbc.ListGroup(
-                        [
-                            dbc.ListGroupItem("United States Environmental Protection Agency (EPA)"),
-                            dbc.ListGroupItem("California Air Resources Board (AQMIS)"),
-                            dbc.ListGroupItem("ERA5 Reanalysis (ECMWF)"),
-                        ]
-                    ),
-                ]
+    # Data Sources Section
+    html.Section(
+        html.Div([
+            html.H2("Data Sources"),
+            html.Ul([
+                html.Li("United States Environmental Protection Agency (EPA)"),
+                html.Li("California Air Resources Board (AQMIS)"),
+                html.Li("ERA5 Reanalysis (ECMWF)"),
+                html.Li("National Interagency Fire Center (NIFC)"),
+            ])
+        ], className="container"),
+    ),
+
+    # Methodology Section
+    html.Section(
+        html.Div([
+            html.H2("Methodology"),
+            html.P(
+                "Our methodology involves collecting and preprocessing historical PM2.5 data, integrating meteorological and wildfire datasets, and applying advanced machine learning models such as LSTMs and GNNs for time series forecasting."
             ),
-            className="mb-4 shadow-sm",
-        ),
-    ],
-    className="p-4",
-)
+            html.Ul([
+                html.Li("Data Collection: Gather PM2.5, meteorological, and wildfire data from reliable sources."),
+                html.Li("Data Preprocessing: Clean and normalize data for analysis."),
+                html.Li("Model Development: Train and evaluate forecasting models."),
+                html.Li("Validation: Compare model predictions with actual observations."),
+            ])
+        ], className="container"),
+    ),
+
+    # Call to Action Section
+    html.Section(
+        html.Div([
+            html.A("Explore Our Methods →", href="/analytics", className="btn btn-primary")
+        ], className="container"),
+        className="hero hero--inverse"
+    ),
+])
