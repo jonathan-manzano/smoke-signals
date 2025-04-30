@@ -1,0 +1,165 @@
+:root {
+    --nav-bg:      #3A5311;
+    --nav-text:    #ffffff;
+    --hero-bg:     #4a90e2; /* Match card background */
+    --hero-inv:    #cfe9ff;
+    --card-bg:     #ffffff;
+    --card-radius: 8px;
+    --accent-1:    #4a90e2;    /* blue */
+    --accent-2:    #50c878;    /* green */
+    --accent-3:    #b366ff;    /* purple */
+    --btn-text:    #ffffff;
+    --section-gap: 3rem;
+  }
+  
+  /* RESET & GLOBAL */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0; padding: 0;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    line-height: 1.6;
+    color: #333;
+  }
+  .container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--section-gap) 0;
+  }
+  h1, h2, h3 {
+    margin-bottom: 1rem;
+    color: var(--nav-bg);
+    line-height: 1.2;
+  }
+  p {
+    margin-bottom: 1rem;
+  }
+  
+  /* NAVBAR */
+  .site-nav {
+    background: var(--nav-bg);
+    color: var(--nav-text);
+    padding: 1rem 0;
+    font-size: 1.25rem; /* Increase font size */
+    text-align: center; /* Center-align the navbar */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
+  }
+  .site-nav .nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+  }
+  .site-nav .brand {
+    font-size: 1.5rem; /* Make the brand text larger */
+    font-weight: bold;
+    color: var(--nav-text);
+    text-decoration: none;
+  }
+  .site-nav .nav-links {
+    list-style: none;
+    display: flex;
+    gap: 1rem;
+    margin: 0; padding: 0;
+  }
+  .site-nav .nav-links a {
+    color: var(--nav-text);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  
+  /* HERO */
+  .hero {
+    background: var(--card-bg); /* Match the card background */
+    padding: 1.5rem; /* Match card padding */
+    border-radius: var(--card-radius); /* Match card border radius */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); /* Match card shadow */
+    margin-bottom: var(--section-gap); /* Match spacing */
+    text-align: center; /* Keep text centered */
+  }
+  .hero--inverse {
+    background: var(--hero-inv); /* Keep the inverse style for alternate heroes */
+  }
+  .hero .subtitle {
+    font-style: italic;
+    margin-bottom: 0.5rem;
+  }
+  .hero .lead {
+    max-width: 600px;
+    margin: 1rem auto 2rem;
+  }
+
+  /* Blue Card Hero */
+  .hero--blue {
+    background: #e3f2fd; /* Light blue background */
+    padding: 1.5rem; /* Match card padding */
+    border-radius: var(--card-radius); /* Match card border radius */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); /* Match card shadow */
+    margin-bottom: var(--section-gap); /* Match spacing */
+    text-align: center; /* Center-align text */
+    color: #333; /* Text color for contrast */
+  }
+  
+  /* BUTTONS */
+  .btn {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--card-radius);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .btn-primary {
+    background: var(--accent-1);
+    color: var(--btn-text);
+  }
+  .btn-secondary {
+    background: var(--accent-2);
+    color: var(--btn-text);
+    margin-left: 0.5rem;
+  }
+  
+  /* METRICS BAR */
+  .metrics {
+    display: flex;
+    gap: 1rem;
+    margin-top: var(--section-gap);
+  }
+  .metric {
+    flex: 1;
+    background: var(--card-bg);
+    text-align: center;
+    padding: 1.5rem;
+    border-top: 4px solid;
+    border-radius: var(--card-radius);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+  .metric:nth-child(1) { border-color: var(--accent-1); }
+  .metric:nth-child(2) { border-color: var(--accent-2); }
+  .metric:nth-child(3) { border-color: var(--accent-3); }
+  .metric h2 {
+    margin-bottom: 0.25rem;
+  }
+  
+  /* REUSABLE CARDS & GRID */
+  .card {
+    background: var(--card-bg);
+    padding: 1.5rem;
+    border-radius: var(--card-radius);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    margin-bottom: 1.5rem;
+  }
+  .card--blue   { background: #e3f2fd; }
+  .card--green  { background: #e8f5e9; }
+  .card--purple { background: #f3e5f5; }
+  .card--yellow { background: #fffde7; }
+  .card--red    { background: #ffebee; }
+  .card--orange { background: #fff3e0; }
+  
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+  }
