@@ -1,7 +1,0 @@
-dash
-plotly
-pandas
-flask
-gunicorn
-google-cloud-storage
-dash-bootstrap-components

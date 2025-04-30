@@ -205,6 +205,5 @@ src/ds_capstone/
 models/
 
 # Later implementation
-/smoke_signals/configs
-/smoke_signals/scripts
-/smoke_signals/src
+smoke_signals/configs
+smoke_signals/scripts
