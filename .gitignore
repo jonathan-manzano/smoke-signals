@@ -1,4 +1,5 @@
 # Data
+data/raw/dataset_fire_wind_aligned.npy
 data/raw/alltimes_pst.npy
 data/raw/dict_wind_grid_lat.pkl
 data/raw/dict_wind_grid_lon.pkl
