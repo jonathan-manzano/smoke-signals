@@ -1,19 +1,19 @@
 body {
     font-family: Arial, sans-serif;
+    background-color: #f8f9fa;
     margin: 0;
     padding: 0;
-    background-color: #f4f4f4;
 }
 
 header {
-    background-color: #ac7c34;
+    background-color: #3A5311; /* Juniper Green */
     color: white;
     padding: 20px;
     text-align: center;
 }
 
 nav {
-    background-color: #ac7c34;
+    background-color: #3A5311; /* Juniper Green */
     padding: 10px;
     text-align: center;
 }
@@ -35,19 +35,11 @@ main {
 }
 
 footer {
-    background-color: #ac7c34;
+    background-color: #3A5311; /* Juniper Green */
     color: white;
     text-align: center;
     padding: 1rem 0;
     position: fixed;
     bottom: 0;
     width: 100%;
-}
-
-.dashboard-frame {
-    width: 100%;
-    height: 80vh;
-    border: none;
-    margin-top: 1rem;
-    box-shadow: 0 4px 8px rgba(12, 15, 192, 0.2);
 }
