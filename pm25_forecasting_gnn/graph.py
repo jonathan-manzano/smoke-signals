@@ -15,8 +15,16 @@ import pickle
 import time
 import requests
 
-city_fp = os.path.join(proj_dir, 'data/locations.txt')
-altitude_fp = os.path.join(proj_dir, 'data/alt.pkl')
+
+# city_fp = os.path.join(proj_dir, 'data/locations.txt')
+# altitude_fp = os.path.join(proj_dir, 'data/alt.pkl')
+
+city_fp = "/content/drive/MyDrive/smoke-signals/data/locations.txt"
+altitude_fp = "/content/drive/MyDrive/smoke-signals/data/alt.pkl"
+
+# city_fp = "/home/jon/smoke-signals/data/raw/locations.txt"
+# altitude_fp = "/home/jon/smoke-signals/data/raw/alt.pkl"
+
 
 class Graph():
     def __init__(self):

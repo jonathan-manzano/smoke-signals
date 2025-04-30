@@ -40,8 +40,11 @@ train:
 
 filepath:
   GPU-Server:
-    knowair_fp: /data/pm25gnn/data/dataset_fire_wind_aligned.npy
-    results_dir: /data/pm25gnn/results
+    knowair_fp: '/content/drive/MyDrive/smoke-signals/data/dataset_fire_wind_aligned.npy'
+    results_dir: '/content/drive/MyDrive/smoke-signals/models/'
+  Local-Dev:
+#    results_dir: '/home/jon/smoke-signals/models/'
+#    knowair_fp: '/home/jon/smoke-signals/data/raw/dataset_fire_wind_aligned.npy'
 
 data:
   metero_var:
