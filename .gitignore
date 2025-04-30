@@ -1,5 +1,18 @@
 # Data
-/data/
+data/raw/dataset_fire_wind_aligned.npy
+data/raw/alltimes_pst.npy
+data/raw/dict_wind_grid_lat.pkl
+data/raw/dict_wind_grid_lon.pkl
+data/raw/frp_dict.pkl
+data/raw/lat_wind.npy
+data/raw/lon_wind.npy
+data/raw/test_feat_mean.npy
+data/raw/test_feat_std.npy
+data/raw/test_pm25_mean.npy
+data/raw/test_pm25_std.npy
+data/raw/time_dict.pkl
+data/raw/train_wind_mean.npy
+data/raw/train_wind_std.npy
 
 # Mac OS-specific storage files
 .DS_Store
