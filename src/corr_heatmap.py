@@ -10,16 +10,17 @@ from dash import dcc, html, Input, Output
 
 # --- Configuration: Replace with your actual file paths ---
 PROJ_ROOT = Path(__file__).resolve().parents[1]
-PM25GNN_DIR = PROJ_ROOT / "models" / "pm25gnn" / "00"
-PREDICT_NET_FILE = PM25GNN_DIR / "predict.npy"
-PM25GNN_AMBIENT_DIR = PROJ_ROOT / "models" / "pm25gnn-ambient" / "00"
+MODELS_DIR = PROJ_ROOT / "models"
+TRAIN00_DIR = MODELS_DIR / "train" / "00"
+PREDICT_NET_FILE = TRAIN00_DIR / "predict.npy"
+PM25GNN_AMBIENT_DIR = MODELS_DIR / "train-ambient" / "00"
 PREDICT_AMBIENT_FILE = PM25GNN_AMBIENT_DIR / "predict.npy"
-LABEL_FILE = PM25GNN_DIR / "label.npy"
-TIME_FILE = PM25GNN_DIR / "time.npy"
+LABEL_FILE = TRAIN00_DIR / "label.npy"
+TIME_FILE = TRAIN00_DIR / "time.npy"
 RAW_DATA_DIR = PROJ_ROOT / "data" / "raw"
 LOCATIONS_FILE = RAW_DATA_DIR / "locations.txt"
 FEATURES_FILE = RAW_DATA_DIR / "dataset_fire_wind_aligned.npy"
-
+PM25_FILE = RAW_DATA_DIR / "dataset_fire_wind_aligned.npy"
 
 # --- Constants ---
 PRED_LEN = 48  # Needed if features/labels have sample/sequence dims
@@ -38,14 +39,18 @@ FEATURE_NAMES = [
     'surface_pressure',
     'u_component_of_wind+950',
     'v_component_of_wind+950',
-    'frp_25km_idw',
-    'frp_50km_idw',
-    'frp_100km_idw',
-    'frp_500km_idw',
-    'numfires',
-    'interp_flag',
-    'julian_date',
-    'time_of_day',
+]
+
+FEATURE_USE = [
+    '100m_u_component_of_wind',
+    '100m_v_component_of_wind',
+    '2m_dewpoint_temperature',
+    '2m_temperature',
+    'boundary_layer_height',
+    'total_precipitation',
+    'surface_pressure',
+    'u_component_of_wind+950',
+    'v_component_of_wind+950',
 ]
 # Add 'Observed_PM25' for the correlation matrix
 ALL_VARS_NAMES = FEATURE_NAMES + ["Observed_PM25"]
@@ -62,18 +67,24 @@ def load_npy_data(filepath):
         print(f"Error: File not found at {filepath}")
         return None
     try:
-        data = np.load(filepath)
+        raw_data = np.load(filepath)
+        if filepath is FEATURES_FILE:
+            data = raw_data[:, :, :9]
+        elif filepath is PM25_FILE:
+            data = raw_data[:, :, -1:]
+        else:
+            data = raw_data
         print(f"Successfully loaded {filepath}, shape: {data.shape}")
         return data
     except Exception as e:
         print(f"Error loading {filepath}: {e}")
         return None
 
-
 # --- Load data ---
 feature_data_raw = load_npy_data(FEATURES_FILE)
 label_data_raw = load_npy_data(LABEL_FILE)
 time_data_raw = load_npy_data(TIME_FILE)
+pm25_data_raw = load_npy_data(PM25_FILE)
 
 # --- Load location data ---
 locations = []
@@ -96,12 +107,15 @@ if os.path.exists(LOCATIONS_FILE):
 else:
     print(f"Error: Locations file not found at {LOCATIONS_FILE}")
 
+# print(locations)
+# print(location_map)
 
 # --- Exit if essential data failed to load ---
 if (
     feature_data_raw is None
     or label_data_raw is None
     or time_data_raw is None
+    or pm25_data_raw is None
     or not locations
 ):
     print(
@@ -109,106 +123,140 @@ if (
     )
     exit()
 
-# --- Data Structure Adaptation ---
-print("Adapting data structure...")
-try:
-    # Step 0: Handle Shape Mismatch
-    min_len = min(
-        feature_data_raw.shape[0], label_data_raw.shape[0], time_data_raw.shape[0]
-    )
-    feature_data_trunc = feature_data_raw[:min_len]
-    label_data_trunc = label_data_raw[:min_len]
-    time_data_trunc = time_data_raw[:min_len]
+# # --- Data Structure Adaptation ---
+# print("Adapting data structure...")
+# try:
+#     # Step 0: Handle Shape Mismatch
+#     min_len = min(
+#         feature_data_raw.shape[0], label_data_raw.shape[0], time_data_raw.shape[0]
+#     )
+#     feature_data_trunc = feature_data_raw[:min_len]
+#     label_data_trunc = label_data_raw[:min_len]
+#     time_data_trunc = time_data_raw[:min_len]
+#
+#     # Get number of locations and features
+#     num_locations_data = label_data_raw.shape[
+#         -2
+#     ]  # Assuming location is second-to-last dim
+#     num_features_data = feature_data_raw.shape[-1]  # Assuming features is last dim
+#
+#     # --- Validate Feature Names ---
+#     if num_features_data != len(FEATURE_NAMES):
+#         print(
+#             f"FATAL ERROR: Number of features in data ({num_features_data}) does not match length of FEATURE_NAMES list ({len(FEATURE_NAMES)})."
+#         )
+#         print(
+#             "Please update the FEATURE_NAMES list in the script to match your data columns."
+#         )
+#         exit()
+#     else:
+#         print(f"Data has {num_features_data} features, matching FEATURE_NAMES list.")
+#
+#     if num_locations_data != len(locations):
+#         print(
+#             f"Warning: Location count mismatch! Data has {num_locations_data}, file has {len(locations)}. Using data count."
+#         )
+#         locations = [
+#             {"label": f"Loc {i}", "value": i} for i in range(num_locations_data)
+#         ]
+#         location_map = {i: f"Loc {i}" for i in range(num_locations_data)}
+#
+#     # Step 1: Extract Relevant Horizon & Reshape Data
+#     if len(label_data_trunc.shape) == 4:  # Assumes (samples, seq, loc, 1) for label
+#         sequence_length = label_data_trunc.shape[1]
+#         if PRED_LEN > sequence_length:
+#             raise ValueError("PRED_LEN > sequence length")
+#
+#         # Extract label part corresponding to predictions
+#         label_pred = label_data_trunc[
+#             :, -PRED_LEN:, :, 0
+#         ]  # Shape: (samples, PRED_LEN, loc)
+#
+#         # Extract corresponding feature part
+#         # Assuming features file has same sample/seq/loc structure, but last dim is num_features
+#         if feature_data_trunc.shape[:3] != label_data_trunc.shape[:3]:
+#             raise ValueError(
+#                 "Feature and Label sample/sequence/location dimensions mismatch"
+#             )
+#         feature_pred = feature_data_trunc[
+#             :, -PRED_LEN:, :, :
+#         ]  # Shape: (samples, PRED_LEN, loc, feat)
+#
+#         num_samples = label_pred.shape[0]
+#         num_locs = label_pred.shape[2]
+#         num_feats = feature_pred.shape[3]
+#
+#         # Reshape to (time*pred_len, locations, features/labels)
+#         label_actual = label_pred.reshape(
+#             num_samples * PRED_LEN, num_locs
+#         )  # Shape: (time, loc)
+#         feature_actual = feature_pred.reshape(
+#             num_samples * PRED_LEN, num_locs, num_feats
+#         )  # Shape: (time, loc, feat)
+#
+#         # Process time data
+#         if time_data_trunc.shape[0] == num_samples:
+#             time_data_processed = np.repeat(time_data_trunc, PRED_LEN)
+#         else:
+#             raise ValueError("Time data shape mismatch")
+#
+#     elif len(label_data_trunc.shape) == 2:  # Assumes (time, location)
+#         label_actual = label_data_trunc  # Shape: (time, loc)
+#         if feature_data_trunc.shape[:2] != label_actual.shape[:2]:
+#             raise ValueError("Feature and Label time/location dimensions mismatch")
+#         feature_actual = feature_data_trunc  # Shape: (time, loc, feat)
+#         time_data_processed = time_data_trunc
+#     else:
+#         raise ValueError("Unsupported label data shape")
+#
+#     # Step 2: Process Timestamps
+#     if time_data_processed.shape[0] != label_actual.shape[0]:
+#         raise ValueError("Timestamp array shape incompatible")
+#     time_data_dt = pd.to_datetime(time_data_processed, unit="s")
+#
+#     print("Data preprocessing complete.")
+#     print(f"Processed label data shape: {label_actual.shape}")
+#     print(f"Processed feature data shape: {feature_actual.shape}")
+#     print(f"Processed time data length: {len(time_data_dt)}")
+#
+# except Exception as e:
+#     print(f"An error occurred during data structure adaptation: {e}")
+#     exit()
 
-    # Get number of locations and features
-    num_locations_data = label_data_raw.shape[
-        -2
-    ]  # Assuming location is second-to-last dim
-    num_features_data = feature_data_raw.shape[-1]  # Assuming features is last dim
+# --- Data Structure Adaptation (Simpler for aligned data) ---
+print("Adapting data structure (assuming aligned full time series)...")
+try:
+    # Step 0: Handle Potential Length Mismatch
+    min_len = min(feature_data_raw.shape[0], pm25_data_raw.shape[0], time_data_raw.shape[0])
+    feature_data_aligned = feature_data_raw[:min_len]
+    pm25_data_aligned = pm25_data_raw[:min_len]
+    time_data_aligned = time_data_raw[:min_len]
+
+    num_locations_data = feature_data_aligned.shape[1] # Should be 112
+    num_features_data = feature_data_aligned.shape[2] # Should be 17
 
     # --- Validate Feature Names ---
-    if num_features_data != len(FEATURE_NAMES):
-        print(
-            f"FATAL ERROR: Number of features in data ({num_features_data}) does not match length of FEATURE_NAMES list ({len(FEATURE_NAMES)})."
-        )
-        print(
-            "Please update the FEATURE_NAMES list in the script to match your data columns."
-        )
+    if num_features_data != len(FEATURE_NAMES): # Check against 17
+        print(f"FATAL ERROR: Feature count mismatch.")
         exit()
-    else:
-        print(f"Data has {num_features_data} features, matching FEATURE_NAMES list.")
+    # --- Validate Location Names ---
+    if num_locations_data != len(locations): # Check against 112
+         print(f"Warning: Location count mismatch! Using data count.")
+         locations = [{'label': f"Loc {i}", 'value': i} for i in range(num_locations_data)]
+         location_map = {i: f"Loc {i}" for i in range(num_locations_data)}
 
-    if num_locations_data != len(locations):
-        print(
-            f"Warning: Location count mismatch! Data has {num_locations_data}, file has {len(locations)}. Using data count."
-        )
-        locations = [
-            {"label": f"Loc {i}", "value": i} for i in range(num_locations_data)
-        ]
-        location_map = {i: f"Loc {i}" for i in range(num_locations_data)}
+    # Step 1: Process Timestamps
+    time_data_dt = pd.to_datetime(time_data_aligned, unit='s') # Assuming unix seconds
 
-    # Step 1: Extract Relevant Horizon & Reshape Data
-    if len(label_data_trunc.shape) == 4:  # Assumes (samples, seq, loc, 1) for label
-        sequence_length = label_data_trunc.shape[1]
-        if PRED_LEN > sequence_length:
-            raise ValueError("PRED_LEN > sequence length")
-
-        # Extract label part corresponding to predictions
-        label_pred = label_data_trunc[
-            :, -PRED_LEN:, :, 0
-        ]  # Shape: (samples, PRED_LEN, loc)
-
-        # Extract corresponding feature part
-        # Assuming features file has same sample/seq/loc structure, but last dim is num_features
-        if feature_data_trunc.shape[:3] != label_data_trunc.shape[:3]:
-            raise ValueError(
-                "Feature and Label sample/sequence/location dimensions mismatch"
-            )
-        feature_pred = feature_data_trunc[
-            :, -PRED_LEN:, :, :
-        ]  # Shape: (samples, PRED_LEN, loc, feat)
-
-        num_samples = label_pred.shape[0]
-        num_locs = label_pred.shape[2]
-        num_feats = feature_pred.shape[3]
-
-        # Reshape to (time*pred_len, locations, features/labels)
-        label_actual = label_pred.reshape(
-            num_samples * PRED_LEN, num_locs
-        )  # Shape: (time, loc)
-        feature_actual = feature_pred.reshape(
-            num_samples * PRED_LEN, num_locs, num_feats
-        )  # Shape: (time, loc, feat)
-
-        # Process time data
-        if time_data_trunc.shape[0] == num_samples:
-            time_data_processed = np.repeat(time_data_trunc, PRED_LEN)
-        else:
-            raise ValueError("Time data shape mismatch")
-
-    elif len(label_data_trunc.shape) == 2:  # Assumes (time, location)
-        label_actual = label_data_trunc  # Shape: (time, loc)
-        if feature_data_trunc.shape[:2] != label_actual.shape[:2]:
-            raise ValueError("Feature and Label time/location dimensions mismatch")
-        feature_actual = feature_data_trunc  # Shape: (time, loc, feat)
-        time_data_processed = time_data_trunc
-    else:
-        raise ValueError("Unsupported label data shape")
-
-    # Step 2: Process Timestamps
-    if time_data_processed.shape[0] != label_actual.shape[0]:
-        raise ValueError("Timestamp array shape incompatible")
-    time_data_dt = pd.to_datetime(time_data_processed, unit="s")
+    # Step 2: Data is already aligned (no complex reshaping needed)
+    # feature_actual will be feature_data_aligned
+    # label_actual will be pm25_data_aligned[:, :, 0] # Remove last dimension
 
     print("Data preprocessing complete.")
-    print(f"Processed label data shape: {label_actual.shape}")
-    print(f"Processed feature data shape: {feature_actual.shape}")
-    print(f"Processed time data length: {len(time_data_dt)}")
 
 except Exception as e:
     print(f"An error occurred during data structure adaptation: {e}")
     exit()
-
 
 # --- Dash App Initialization ---
 # Use JupyterDash for Colab:
@@ -291,8 +339,8 @@ def update_meteo_heatmap(selected_location_id, start_date, end_date):
     # Get the observed PM2.5 and features for the selected location and time period
     # Location ID directly corresponds to the index in the second dimension
     location_index = selected_location_id
-    filtered_labels_loc = label_actual[time_mask, location_index]
-    filtered_features_loc = feature_actual[time_mask, location_index, :]
+    filtered_labels_loc = pm25_data_aligned[time_mask, location_index, 0]
+    filtered_features_loc = feature_data_aligned[time_mask, location_index, :]
 
     # Check if enough data remains
     if filtered_labels_loc.shape[0] < 2:
