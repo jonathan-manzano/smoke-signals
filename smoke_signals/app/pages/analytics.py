@@ -1,62 +1,43 @@
 # analytics.py
 import dash
 from dash import html, dcc, callback, Input, Output
-import plotly.express as px
 from utils import get_csv_from_gcs
 from Nav_bar import create_navbar
 
-dash.register_page(__name__, path="/analytics", name="Methods")
-
-# load your dataframe as before…
-df = get_csv_from_gcs("smoke-signal-bucket", "gapminder2007.csv")
+dash.register_page(__name__, path="/analytics", name="Findings")
 
 layout = html.Div([
-    create_navbar(),
-
-    # Hero
+    # Hero Section wrapped in a blue box
     html.Section(
-      html.Div([
-        html.H1("Analytics Dashboard"),
-        html.P("Interactive charts to explore your data", className="lead")
-      ], className="container"),
-      className="hero"
+        html.Div([
+            html.H1("Analytics Dashboard"),
+            html.P("Explore the data and uncover insights with interactive visualizations.", className="lead")
+        ], className="container"),
+        className="hero hero--blue"  # Apply the blue box styling
     ),
 
     # Metric cards if any…
     html.Section(
-      html.Div([
-        # e.g. html.Div([...], className="metric"), …
-      ], className="metrics container")
+        html.Div([
+            # e.g. html.Div([...], className="metric"), …
+        ], className="metrics container")
     ),
 
-    # Plot + controls
+    # Correlation Heatmaps Section
     html.Section(
-      html.Div([
-        dcc.RadioItems(
-          id="analytics-radio-item",
-          options=[{"label": col, "value": col} for col in ["pop", "lifeExp", "gdpPercap"]],
-          value="pop",
-          inline=True
-        ),
-        dcc.Graph(id="analytics-graph")
-      ], className="container"),
-    ),
-
-    # Final CTA
-    html.Section(
-      html.Div([
-        html.A("View Findings →", href="/findings", className="btn btn-primary")
-      ], className="container"),
-      className="hero hero--inverse"
+        html.Div([
+            html.H2("Correlation Heatmaps", style={"textAlign": "center"}),
+            html.Div([
+                html.Iframe(
+                    src="/assets/corre_maps/corr_heatmap_Fresno_2021-05-01_to_2021-12-30.html",
+                    style={"width": "100%", "height": "600px", "border": "none"}
+                ),
+                html.Iframe(
+                    src="/assets/corre_maps/corr_heatmap_Glendora_2021-05-01_to_2021-12-30.html",
+                    style={"width": "100%", "height": "600px", "border": "none", "marginTop": "20px"}
+                ),
+                # Add more iframes for other heatmaps as needed
+            ], className="container"),
+        ], className="container"),
     ),
 ])
-
-@callback(
-    Output("analytics-graph", "figure"),
-    Input("analytics-radio-item", "value"),
-)
-def update_graph(col_chosen):
-    fig = px.histogram(df, x="continent", y=col_chosen,
-                       histfunc="avg",
-                       title=f"Average {col_chosen} by Continent")
-    return fig

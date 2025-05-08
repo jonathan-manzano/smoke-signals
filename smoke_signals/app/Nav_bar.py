@@ -11,8 +11,7 @@ def create_navbar(project_name="Research Dashboard"):
             html.Ul([
                 html.Li(html.A("Home", href="/")),
                 html.Li(html.A("Objectives", href="/proposal")),
-                html.Li(html.A("Methods", href="/analytics")),
-                html.Li(html.A("Findings", href="/findings")),
+                html.Li(html.A("Findings", href="/analytics")),
             ], className="nav-links"),
 
         ], className="nav-inner container"),

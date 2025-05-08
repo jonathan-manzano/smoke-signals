@@ -29,7 +29,7 @@ app.layout = html.Div(
         # Footer Section
         html.Footer(
             html.P(
-                "© 2023 Smoke Signals. All rights reserved.",
+                "© 2025 Smoke Signals. All rights reserved.",
                 className="text-center text-muted my-3",
             ),
             className="footer bg-light py-3",

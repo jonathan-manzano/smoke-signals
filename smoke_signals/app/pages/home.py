@@ -75,7 +75,7 @@ layout = html.Div([
     # Embedded Map
     html.Section(
       html.Div([
-        html.H2("Interactive Map of California"),
+        html.H2("PM2.5 Monitoring Sites in California", style={"textAlign": "center"}),
         html.Iframe(
           src="/assets/location_map.html",
           style={"width": "100%", "height": "600px", "border": "none"}
