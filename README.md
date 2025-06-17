@@ -11,7 +11,7 @@ to forecast air quality and identify key environmental factors.
 The findings are presented in an interactive web dashboard.
 
 **Live Website**:
-[Smoke Signals](https://smoke-signals-pmgnn-457202.uw.r.appspot.com/analytics)
+[Smoke Signals](https://smoke-signals-pmgnn-457202.uw.r.appspot.com)
 
 ---
 
